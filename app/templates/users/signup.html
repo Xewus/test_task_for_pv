@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load user_filters %}
+{% block card_header %}Регистрация{% endblock card_header %}
+{% block form %}
+
+  {% include 'includes/out_error_fields.html' %}
+
+  <form method="post" action="{% url 'users:signup' %}">
+    {% csrf_token %}
+
+    {% include 'includes/out_fields.html' with submit='Зарегистрироваться' %}
+  </form>
+
+{% endblock form %}

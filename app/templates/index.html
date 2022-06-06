@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block header %}{{ header }}{% endblock %}
+{% block card_header %}{{ text }}{% endblock card_header %}
+{% block form %}
+  <p style="display: flex; justify-content: center" >
+    <a class="p-2 text-dark" href="{% url 'questions:questions' %}">Впердё</a>
+  </p>
+{% endblock form %}

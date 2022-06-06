@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block card_header %}{{ header }}{% endblock card_header %}
+{% block form %}
+  <div style="display: flex; justify-content: center" >
+    {% for result in results %}
+      {% if result.amount is not None %}
+        {{ result.amount }}: {{ result.username }}.
+        {% if result.finish_test_time  %}
+          Дата: {{ result.finish_test_time }}
+        {% endif %}
+        <br>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endblock form %}

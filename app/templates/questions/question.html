@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock title %}
+{% block card_header %}{{ header}}{% endblock card_header %}
+{% block form %}
+  <h5>{{ question.text }}</h5>
+  <form method="post" action="{% url 'questions:questions' %}">
+    {% csrf_token %}
+  
+    <fieldset>
+      {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+      {% for answer in question.answers.all %}
+          <input type="{{ button_type }}" name="answer" value="{{ answer.id }}">
+          <label for="answer{{ forloop.counter }}">{{ answer.text }}</label><br>
+      {% endfor %}
+    </fieldset>
+    <input type="submit" value="Подтвердить">
+  </form>
+{% endblock form %}

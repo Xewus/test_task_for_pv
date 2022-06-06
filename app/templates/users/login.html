@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load user_filters %}
+{% block card_header %}Вход в систему{% endblock card_header %}
+{% block form %}
+
+  {% include 'includes/out_error_fields.html' %}
+
+  {% if next %}
+    <div class="alert alert-info" role="alert">
+      Вы обратились к странице, доступ к которой возможен
+      только для залогиненных пользователей.<br>
+      Пожалуйста, авторизуйтесь.
+    </div>
+  {% else %}
+    <div class="alert alert-info" role="alert">
+      Пожалуйста, авторизуйтесь.
+    </div>
+  {% endif %}
+
+  <form method="post" action="{% url 'users:login' %}">
+    {% csrf_token %}
+    
+    {% include 'includes/out_fields.html' with submit='Войти' %}
+
+  </form>
+
+{% endblock form %}

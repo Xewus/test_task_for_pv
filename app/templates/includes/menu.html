@@ -1,0 +1,13 @@
+<ul class="nav nav-tabs">
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="{% url 'questions:rating' %}">Рейтинг</a>
+  </li>
+  {% if user.is_authenticated %}
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="{% url 'questions:my_results' %}">История Ваших тестов</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link text-dark" href="{% url 'questions:finish_test' %}">Завершить досрочно</a>
+  </li>
+  {% endif %}
+</ul>
