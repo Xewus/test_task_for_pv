@@ -1,18 +1,11 @@
 from django.shortcuts import render, redirect
-from django.urls import reverse, reverse_lazy
-from django.views.generic.edit import CreateView
 from django.contrib.auth.decorators import login_required
 from django.db.models import Max, F, Q
 
-from .models import Question, Answer, User, Results
+from .models import Question, Answer, User, Result
 from core import utils
-from . import forms
 
 TITLE = ' Проверь своего Питона'
-
-# class QuestionView(CreateView):
-#     form_class = QuestionForm
-#     te
 
 
 def index(request):
@@ -75,10 +68,10 @@ def get_question(request, current_result=None, error_message=None):
     if current_result is None:
         current_result = utils.get_current_result(request.user)
 
-    past_question = current_result.answers.values('question__id').last()
+    past_question = current_result.answers.values('questions__id').last()
 
     if isinstance(past_question, dict):
-        last_question_id = past_question.get('question__id', 0)
+        last_question_id = past_question.get('questions__id', 0)
     else:
         last_question_id = 0
 
@@ -114,12 +107,12 @@ def add_answer(request, result, question_id):
             request, error_message='Вы не выбрали ответ.'
         )
 
-    on_question = Q(question__id=question_id)
+    on_question = Q(questions__id=question_id)
     answers_in_choice = Q(id__in=choice)
 
     aviable_answers = Answer.objects.filter(
         on_question & answers_in_choice
-    ).select_related('question')
+    ).select_related('questions')
 
     if not aviable_answers:
         return get_question(
@@ -135,7 +128,11 @@ def add_answer(request, result, question_id):
 def to_finish_test(request):
     """Завершает тест.
     """
-    result = Results.objects.filter(user=request.user).prefetch_related('answers').order_by('-id').first()
+    result = Result.objects.filter(
+        users=request.user
+    ).prefetch_related(
+        'answers'
+    ).order_by('-id').first()
     if result is None or not result.answers.all():
         return redirect('questions:index')
 

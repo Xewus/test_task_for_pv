@@ -1,21 +1,21 @@
 from datetime import datetime
 from django.db.models import Q, Sum
-from questions.models import Results
+from questions.models import Result
 
 
 def get_last_open_result(user):
     """Ищет отрытый тест."""
-    current_user = Q(user=user)
+    current_user = Q(users=user)
     not_finished = Q(finish_test_time=None)
-    return Results.objects.filter(
+    return Result.objects.filter(
         current_user & not_finished
-    ).select_related('user').last()
+    ).select_related('users').last()
 
 
 def get_current_result(user):
     result = get_last_open_result(user)
     if not result:
-        result = Results.objects.create(user=user)
+        result = Result.objects.create(users=user)
     return result
 
 

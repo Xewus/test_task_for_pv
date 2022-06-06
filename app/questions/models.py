@@ -9,8 +9,9 @@ User = get_user_model()
 
 
 class Question(models.Model):
-    text = models.TextField(
+    text = models.CharField(
         verbose_name='Вопрос',
+        max_length=300,
         null=False
     )
     many_answers = models.BooleanField(
@@ -49,7 +50,7 @@ class Answer(models.Model):
         null=False,
         default=0
     )
-    question = models.ForeignKey(
+    questions = models.ForeignKey(
         verbose_name='Вопрос к этому ответу',
         related_name='answers',
         to=Question,
@@ -62,7 +63,7 @@ class Answer(models.Model):
         verbose_name_plural = 'Ответы'
         constraints = (
             models.UniqueConstraint(
-                fields=('text', 'question'),
+                fields=('text', 'questions'),
                 name='Одинаковые ответы у вопроса'
             ),
             models.CheckConstraint(
@@ -72,11 +73,11 @@ class Answer(models.Model):
         )
 
     def __str__(self):
-        return f'{self.question.text} {self.text}. Вес: {self.weight}'
+        return f'{self.questions.text} {self.text}. Вес: {self.weight}'
 
 
-class Results(models.Model):
-    user = models.ForeignKey(
+class Result(models.Model):
+    users = models.ForeignKey(
         verbose_name='Пользователь',
         related_name='results',
         to=User,

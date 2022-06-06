@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db.models import Sum, Max
 
-from .models import Question, Answer, Results
+from .models import Question, Answer, Result
 
 
 class AnswerInline(admin.TabularInline):
@@ -11,26 +11,26 @@ class AnswerInline(admin.TabularInline):
 @admin.register(Answer)
 class AnswerAdmin(admin.ModelAdmin):
     list_display = (
-        'text', 'weight', 'question'
+        'text', 'weight', 'questions'
     )
     search_fields = (
-        'text', 'question__text'
+        'text', 'questions__text'
     )
     list_filter = (
-        'question',
+        'questions',
     )
 
 
 
-@admin.register(Results)
+@admin.register(Result)
 class ResultsAdmin(admin.ModelAdmin):
     list_display = (
-        'user',
+        'users',
         'amount',
         'finish_test_time'
     )
     search_fields = (
-        'user__username',
+        'users__username',
     )
     list_filter = (
         'finish_test_time',
