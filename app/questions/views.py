@@ -1,20 +1,24 @@
-from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.db.models import Max, F, Q
+from django.db.models import F, Max, Q
+from django.shortcuts import redirect, render
 
-from .models import Question, Answer, User, Result
 from core import utils
+from core import constants as const
 
-TITLE = ' Проверь своего Питона'
+from .models import Answer, Question, Result, User
 
 
 def index(request):
     """Обработчик для главной страницы.
     """
+    grades = Answer.objects.all().values_list('grade')
+    maximum = sum(grade[0] for grade in grades if grade[0] > 0)
     template = 'index.html'
     context = {
-        'title': TITLE,
-        'text': 'Готовы к проверке знаний?'
+        'title': const.TITLE,
+        'greeting': const.GREETING_TEXT,
+        'maximum': maximum,
+        'text': const.INDEX_PAGE_TEXT
     }
     return render(request, template, context)
 
@@ -29,8 +33,8 @@ def all_results(request):
     ).order_by('-amount')
     template = 'questions/results.html'
     context = {
-        'title': TITLE,
-        'header': 'Рейтинг участников',
+        'title': const.TITLE,
+        'header': const.ALL_RESULTS_HEADER,
         'results': results
     }
 
@@ -39,7 +43,7 @@ def all_results(request):
 
 @login_required
 def my_results(request):
-    """Показывает результаты текущего пользователя.
+    """Показывает все результаты текущего пользователя.
     """
     results = User.objects.filter(
         id=request.user.id
@@ -52,8 +56,8 @@ def my_results(request):
 
     template = 'questions/results.html'
     context = {
-        'title': TITLE,
-        'header': 'История Ваших тестов',
+        'title': const.TITLE,
+        'header': const.MY_RESULTS_HEADER,
         'results': results
     }
 
@@ -61,8 +65,10 @@ def my_results(request):
 
 
 @login_required
-def get_question(request, current_result=None, error_message=None):
-    """Выводит очередной вопрос.
+def get_question(
+    request, current_result=None, to_add_answer=True, error_message=None
+):
+    """Выводит очередной вопрос и учитывает ответы.
     Если предыдущий тест был случайно прерван, продолжит предыдущий тест.
     """
     if current_result is None:
@@ -78,16 +84,15 @@ def get_question(request, current_result=None, error_message=None):
     next_question = Question.objects.filter(id__gt=last_question_id).first()
 
     if not next_question:
-        utils.close_last_result(current_result)
-        return redirect('questions:finish_test')
+        return to_finish_test(request, current_result)
 
-    if request.method == 'POST':
+    # Переход к обработке переданных ответов
+    if request.method == 'POST' and to_add_answer:
         return add_answer(request, current_result, next_question.id)
 
     template = 'questions/question.html'
     context = {
-        'title': TITLE,
-        'header': 'Ответьте на вопрос ниже',
+        'title': const.TITLE,
         'question': next_question,
         'button_type': ('radio', 'checkbox')[next_question.many_answers],
         'error_message': error_message
@@ -98,51 +103,60 @@ def get_question(request, current_result=None, error_message=None):
 
 @login_required
 def add_answer(request, result, question_id):
-    """Учитывает выбранный пользователем ответ.
+    """Фильтрует и учитывает переданые пользователем ответы.
     """
     choice = request.POST.getlist('answer')
-    request.method = 'GET'
     if not choice:
         return get_question(
-            request, error_message='Вы не выбрали ответ.'
+            request,
+            to_add_answer=False,
+            error_message=const.ERR_NO_ANSWERS
         )
 
-    on_question = Q(questions__id=question_id)
-    answers_in_choice = Q(id__in=choice)
-
     aviable_answers = Answer.objects.filter(
-        on_question & answers_in_choice
+        Q(questions__id=question_id) &
+        Q(id__in=choice)
     ).select_related('questions')
 
     if not aviable_answers:
         return get_question(
-            request, error_message='Повторите выбор.'
+            request,
+            to_add_answer=False,
+            error_message=const.ERR_FALSE_ANSWERS
         )
 
     result.answers.add(*aviable_answers)
 
-    return get_question(request, result)
+    return get_question(request, result, to_add_answer=False)
 
 
 @login_required
-def to_finish_test(request):
+def to_finish_test(request, result=None):
     """Завершает тест.
+    Если пользователь не проходил тестов, либо пытается завершить без
+    отмеченных ответов, перекидывает на главную страницу.
+    Начатый тест будет продолжен в дальнейшем.
     """
-    result = Result.objects.filter(
-        users=request.user
-    ).prefetch_related(
-        'answers'
-    ).order_by('-id').first()
+    if result is None:
+        result = Result.objects.filter(
+            users=request.user
+        ).prefetch_related(
+            'answers'
+        ).order_by('-id').first()
+
     if result is None or not result.answers.all():
         return redirect('questions:index')
 
     if not result.finish_test_time:
         utils.close_last_result(result)
 
+    if result.amount < 0:
+        return redirect(const.LOSE)
+
     template = 'questions/finish.html'
     context = {
-        'title': TITLE,
-        'header': 'За сим всё',
+        'title': const.TITLE,
+        'header': const.FINISH_HEADER,
         'result': result
     }
     return render(request, template, context)

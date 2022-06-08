@@ -1,25 +1,25 @@
+from django import forms
 from django.contrib import admin
-from django.db.models import Sum, Max
 
-from .models import Question, Answer, Result
+from .models import Answer, Question, Result
 
 
 class AnswerInline(admin.TabularInline):
     model = Answer
     extra = 2
 
+
 @admin.register(Answer)
 class AnswerAdmin(admin.ModelAdmin):
     list_display = (
-        'text', 'weight', 'questions'
+        'text', 'grade', 'questions'
     )
     search_fields = (
-        'text', 'questions__text'
+        'text', 'questions__text', 'questions__head'
     )
     list_filter = (
-        'questions',
+        'questions__head',
     )
-
 
 
 @admin.register(Result)
@@ -35,10 +35,16 @@ class ResultsAdmin(admin.ModelAdmin):
     list_filter = (
         'finish_test_time',
     )
-    
+
+
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
+    # def get_form(self, request, obj=None, **kwargs):
+    #     kwargs['widgets'] = {'text': forms.Textarea}
+    #     return super().get_form(request, obj, **kwargs)
+
     list_display = (
+        'id',
         'text',
         'many_answers',
         'get_max_points'
@@ -55,6 +61,5 @@ class QuestionAdmin(admin.ModelAdmin):
     )
 
     def get_max_points(self, question):
-        if question.many_answers:
-            return question.answers.aggregate(Sum('weight'))['weight__sum']
-        return question.answers.aggregate(Max('weight'))['weight__max']
+        grades = question.answers.all().values_list('grade')
+        return sum(grade[0] for grade in grades if grade[0] > 0)

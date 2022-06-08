@@ -1,15 +1,27 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock title %}
-{% block card_header %}{{ header}}{% endblock card_header %}
+{% block card_header %}<h4>{{ question.head }}</h4>{% endblock card_header %}
 {% block form %}
-  <h5>{{ question.text }}</h5>
+  <h5>{{ question.text|linebreaks }}</h5>
   <form method="post" action="{% url 'questions:questions' %}">
     {% csrf_token %}
   
     <fieldset>
-      {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+      {% if error_message %}
+        <p><strong>{{ error_message }}</strong></p>
+      {% endif %}
+
+      {% if button_type == 'radio' %}
+        <h6>Выберите один вариант</h6>
+      {% else %}
+        <h6>Выберите один или несколько вариантов</h6>
+      {% endif %}
+      <br>
+
       {% for answer in question.answers.all %}
+
           <input type="{{ button_type }}" name="answer" value="{{ answer.id }}">
+
           <label for="answer{{ forloop.counter }}">{{ answer.text }}</label><br>
       {% endfor %}
     </fieldset>
