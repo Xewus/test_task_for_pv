@@ -17,11 +17,8 @@
         <h6>Выберите один или несколько вариантов</h6>
       {% endif %}
       <br>
-
       {% for answer in question.answers.all %}
-
           <input type="{{ button_type }}" name="answer" value="{{ answer.id }}">
-
           <label for="answer{{ forloop.counter }}">{{ answer.text }}</label><br>
       {% endfor %}
     </fieldset>
