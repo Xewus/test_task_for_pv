@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import F, Max, Q
+from django.db.models import F, Max, Q, Sum
 from django.shortcuts import redirect, render
 
 from core import utils
@@ -11,13 +11,16 @@ from .models import Answer, Question, Result, User
 def index(request):
     """Обработчик для главной страницы.
     """
-    grades = Answer.objects.all().values_list('grade')
-    maximum = sum(grade[0] for grade in grades if grade[0] > 0)
+    maximum_grade = Answer.objects.filter(
+        grade__gt=0
+    ).aggregate(
+        Sum('grade')
+    )['grade__sum']
     template = 'index.html'
     context = {
         'title': const.TITLE,
         'greeting': const.GREETING_TEXT,
-        'maximum': maximum,
+        'maximum': maximum_grade,
         'text': const.INDEX_PAGE_TEXT
     }
     return render(request, template, context)
@@ -138,10 +141,10 @@ def to_finish_test(request, result=None):
     Начатый тест будет продолжен в дальнейшем.
     """
     if result is None:
-        result = Result.objects.filter(
+        result = Result.objects.values(
+            'amount', username=F('users__username')
+        ).filter(
             users=request.user
-        ).prefetch_related(
-            'answers'
         ).order_by('-id').first()
 
     if result is None or not result.answers.all():
