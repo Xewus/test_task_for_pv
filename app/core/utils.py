@@ -34,3 +34,4 @@ def close_last_result(result):
     result.finish_test_time = datetime.now()
     result.save()
     return
+
